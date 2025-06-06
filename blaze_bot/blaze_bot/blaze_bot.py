@@ -1,49 +1,36 @@
+
 import os
-import logging
-from telegram import Bot
-from telegram.error import TelegramError
-from apscheduler.schedulers.blocking import BlockingScheduler
-from sklearn.ensemble import RandomForestClassifier
 import random
-import numpy as np
+from telegram import Bot
+from apscheduler.schedulers.blocking import BlockingScheduler
+from pytz import utc
 
-# Configurações do Telegram via variáveis de ambiente
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("CHAT_ID")
+# Token e Chat ID fixos
+TELEGRAM_TOKEN = "7556395706:AAF6eWqQNV2HFv1gr8q2JSoszIrxiOgirXg"
+CHAT_ID = "7784221634"
 
-# Inicializa o bot
 bot = Bot(token=TELEGRAM_TOKEN)
-logging.basicConfig(level=logging.INFO)
 
-# Simulação de dados históricos para IA
-historico = [random.choice(['red', 'black', 'white']) for _ in range(100)]
-mapeamento = {'red': 0, 'black': 1, 'white': 2}
-X = [[mapeamento[cor]] for cor in historico[:-1]]
-y = [mapeamento[cor] for cor in historico[1:]]
-
-modelo = RandomForestClassifier()
-modelo.fit(X, y)
-
+# Simulação simples da IA para prever cor (red, black, white)
 def prever_cor():
-    ultima = X[-1]
-    previsao = modelo.predict([ultima])[0]
-    prob = modelo.predict_proba([ultima])[0][previsao]
-    cor = list(mapeamento.keys())[list(mapeamento.values()).index(previsao)]
-    return cor, round(prob * 100, 2)
+    return random.choices(["vermelho", "preto", "branco"], weights=[45, 45, 10])[0]
+
+# Histórico e assertividade
+historico = []
 
 def enviar_mensagem():
-    try:
-        cor, assertividade = prever_cor()
-        mensagem = f"🎯 Previsão: {cor.upper()}\n📊 Assertividade: {assertividade}%"
-        bot.send_message(chat_id=CHAT_ID, text=mensagem)
-        logging.info(f"Mensagem enviada: {mensagem}")
-    except TelegramError as e:
-        logging.error(f"Erro ao enviar mensagem: {e}")
+    cor = prever_cor()
+    historico.append(cor)
+    if len(historico) > 100:
+        historico.pop(0)
+    mais_previsoes = historico.count(cor)
+    assertividade = round((mais_previsoes / len(historico)) * 100, 2)
+    mensagem = f"🎯 Previsão: {cor.upper()}\n📊 Assertividade: {assertividade}%"
+    bot.send_message(chat_id=CHAT_ID, text=mensagem)
 
-# Agenda para enviar mensagem a cada 5 minutos
-scheduler = BlockingScheduler()
+scheduler = BlockingScheduler(timezone=utc)
 scheduler.add_job(enviar_mensagem, 'interval', minutes=5)
 
-if __name__ == "__main__":
-    logging.info("✅ Robô Blaze com IA (nuvem) iniciado!")
-    scheduler.start()
+print("✅ Robô Blaze com IA iniciado!")
+enviar_mensagem()
+scheduler.start()
