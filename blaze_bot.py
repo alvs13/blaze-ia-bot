@@ -34,7 +34,7 @@ def prever_cor():
 def enviar_mensagem():
     try:
         cor, assertividade = prever_cor()
-        mensagem = f"🎯 Previsão: {cor.upper()}
+        mensagem = f"🎯 Previsão: {cor.upper()}\n📊 Assertividade: {assertividade}%"
 📊 Assertividade: {assertividade}%"
         bot.send_message(chat_id=CHAT_ID, text=mensagem)
         logging.info(f"Mensagem enviada: {mensagem}")
