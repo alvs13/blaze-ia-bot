@@ -1,36 +1,48 @@
-
-import os
 import random
-from telegram import Bot
 from apscheduler.schedulers.blocking import BlockingScheduler
-from pytz import utc
+from telegram import Bot
+import pytz
+import os
 
-# Token e Chat ID fixos
+# Variáveis de ambiente simuladas (substitua isso se usar .env)
 TELEGRAM_TOKEN = "7556395706:AAF6eWqQNV2HFv1gr8q2JSoszIrxiOgirXg"
 CHAT_ID = "7784221634"
 
+# Inicialização do bot
 bot = Bot(token=TELEGRAM_TOKEN)
 
-# Simulação simples da IA para prever cor (red, black, white)
-def prever_cor():
-    return random.choices(["vermelho", "preto", "branco"], weights=[45, 45, 10])[0]
-
-# Histórico e assertividade
+# Histórico fictício para simulação
 historico = []
 
+# Função que simula a cor da próxima jogada
+def prever_cor():
+    return random.choice(["vermelho", "preto", "branco"])
+
+# Função para calcular a assertividade
+def calcular_assertividade(historico, cor_prevista):
+    if not historico:
+        return 0.0
+    acertos = sum(1 for cor in historico if cor == cor_prevista)
+    return (acertos / len(historico)) * 100
+
+# Função principal que será agendada
 def enviar_mensagem():
     cor = prever_cor()
     historico.append(cor)
-    if len(historico) > 100:
+    if len(historico) > 10:
         historico.pop(0)
-    mais_previsoes = historico.count(cor)
-    assertividade = round((mais_previsoes / len(historico)) * 100, 2)
-    mensagem = f"🎯 Previsão: {cor.upper()}\n📊 Assertividade: {assertividade}%"
+    assertividade = calcular_assertividade(historico, cor)
+
+    mensagem = (
+        "🎯 SINAL GERADO: APOSTAR AGORA!\n\n"
+        f"🎨 Cor com maior chance: {'🔴 VERMELHO' if cor == 'vermelho' else '⚫ PRETO' if cor == 'preto' else '⚪ BRANCO'}\n"
+        f"📈 Assertividade atual: {assertividade:.2f}%\n\n"
+        "💡 Entrada recomendada na próxima rodada!"
+    )
     bot.send_message(chat_id=CHAT_ID, text=mensagem)
 
-scheduler = BlockingScheduler(timezone=utc)
-scheduler.add_job(enviar_mensagem, 'interval', minutes=5)
-
+# Agendador
+scheduler = BlockingScheduler(timezone=pytz.utc)
+scheduler.add_job(enviar_mensagem, 'interval', minutes=1)
 print("✅ Robô Blaze com IA iniciado!")
-enviar_mensagem()
 scheduler.start()
